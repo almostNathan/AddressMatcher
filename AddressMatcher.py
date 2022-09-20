@@ -1,9 +1,23 @@
 from distutils.command.build import build
-from openpyxl import Workbook, load_workbook
+from openpyxl import Workbook, load_workbook, Worksheet
 from openpyxl.utils import get_column_letter
 import tkinter
 from tkinter import filedialog
 import os
+
+
+class MySheet(Worksheet):
+
+    def __init__(self):
+        super().__init__()
+        self.headerlist = []
+
+    def headerList(self):
+        for col in range(1, self.active.max_column+1):
+            cell = self.active[get_column_letter(col)+"1"].value
+            headerList.append(cell)
+        return headerList
+
 
 
 #parameters 
@@ -104,8 +118,8 @@ sheets = []
 addressZip = []
 
 for index, filePath in enumerate(workbookFilePath):
-    workbooks.append(load_workbook(filePath))
-    sheets.append(workbooks[index].active)
+    workbooks.append(MySheet(load_workbook(filePath)))
+    sheets.appen(MySheet(workbooks[index].active))
     headerList = getHeaders(sheets[index])
     selectedCols = getSelectedColLetters(headerList)
     addressZip.append(getAddresses(sheets[index], selectedCols))
