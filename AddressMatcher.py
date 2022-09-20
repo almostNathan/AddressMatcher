@@ -5,14 +5,26 @@ import tkinter
 from tkinter import filedialog
 import os
 
-def writeAddresses(sheet1, list1, sheet2, list2, matches):
-    column1 = get_column_letter(sheet1.max_column)
-    column2 = get_column_letter(sheet1.max_column)
+
+#parameters 
+#   sheets = array of sheets being matched
+#   addressLists = array of [address, zip]
+#   matches = array of matched rows [[a,b],[c,d],[x,y]]
+#append matched addresses to rows
+def writeAddresses(sheets, matches):
+    lastColumns = []
+    for sheet in sheets:
+        lastColumns.append(get_column_letter(sheet.max_column+1))
+        print(lastColumns)
     for item in matches:
-        sheet1[column1+str(item[0])] = sheet2[column2+str(item[1])].value
+
+        sheets[0][lastColumns[0]+str(item[0]+1)].value = sheets[1][lastColumns[1]+str(item[1]+1)].value
+        sheets[1][lastColumns[1]+str(item[1]+1)].value = sheets[0][lastColumns[0]+str(item[0]+1)].value
 
 
-#takes list if strings and returns 
+
+#takes list if strings and 
+#returns list of row matches [[x,y],[a,b],[c,z]]
 def getAddresses(sheet, selectedCols):
     maxRows = sheet.max_row
     addressesFull = []
@@ -30,7 +42,7 @@ def getAddresses(sheet, selectedCols):
     
 
     
-
+#displays column selector with header names
 def buildColumnSelector(headerList):
     window = tkinter.Tk()
     window.title('Select Columns')
@@ -45,7 +57,6 @@ def buildColumnSelector(headerList):
     for i in range(0,len(headerList)):
         colList.append(tkinter.IntVar())
 
-
     counter = 0
     for column in headerList:
         tkinter.Checkbutton(window, text=column, variable=colList[counter], onvalue= counter+1, offvalue=0).pack()
@@ -56,9 +67,7 @@ def buildColumnSelector(headerList):
 
     btn = tkinter.Button(window, text='Submit', command = window.destroy).pack()
 
-
     window.mainloop()
-
     return colList
 
 #takes a list of column numbers and returns list of letters
@@ -72,6 +81,8 @@ def getSelectedColLetters(headerList):
 
     return selectedCols
 
+
+#get the headers from the sheet
 def getHeaders(sheet):
     headerList = []
     for col in range(1, sheet.max_column+1):
@@ -80,33 +91,35 @@ def getHeaders(sheet):
     return headerList
 
 
+workbookFilePath = []
 #get the workbook filepath from the user, dialog fileselect window
-workbookFilePath1 = "C:/Users/natha/Documents/BBB Address Matcher/AceTest.xlsx"
-#workbookFilePath1 = filedialog.askopenfilename(initialdir=os.getcwd(), title="Select the Excel File", filetypes=(("Excel Files", "*.xlsx"),("All Files", "*.*")))
+#workbookFilePath.append("C:/Users/natha/Documents/BBB Address Matcher/AceTest.xlsx")
+workbookFilePath.append(filedialog.askopenfilename(initialdir=os.getcwd(), title="Select the Excel File", filetypes=(("Excel Files", "*.xlsx"),("All Files", "*.*"))))
 
-workbookFilePath2 = "C:/Users/natha/Documents/BBB Address Matcher/AceTest2.xlsx"
-#workbookFilePath2 = filedialog.askopenfilename(initialdir=os.getcwd(), title="Select the Excel File", filetypes=(("Excel Files", "*.xlsx"),("All Files", "*.*")))
+#workbookFilePath.append("C:/Users/natha/Documents/BBB Address Matcher/AceTest2.xlsx")
+workbookFilePath.append(filedialog.askopenfilename(initialdir=os.getcwd(), title="Select the Excel File", filetypes=(("Excel Files", "*.xlsx"),("All Files", "*.*"))))
 
+workbooks = []
+sheets = []
+addressZip = []
 
-workbook1 = load_workbook(workbookFilePath1)
-sheet1 = workbook1.active
-headerList1 = getHeaders(sheet1)
-selectedCols1 = getSelectedColLetters(headerList1)
-addressZip1 = getAddresses(sheet1, selectedCols1)
-
-workbook2 = load_workbook(workbookFilePath2)
-sheet2 = workbook2.active
-headerList2 = getHeaders(sheet2)
-selectedCols2 = getSelectedColLetters(headerList2)
-addressZip2 = getAddresses(sheet2, selectedCols2)
+for index, filePath in enumerate(workbookFilePath):
+    workbooks.append(load_workbook(filePath))
+    sheets.append(workbooks[index].active)
+    headerList = getHeaders(sheets[index])
+    selectedCols = getSelectedColLetters(headerList)
+    addressZip.append(getAddresses(sheets[index], selectedCols))
+    
 
 matches = []
-for item1 in addressZip1:
-    for item2 in addressZip2:
+for item1 in addressZip[0]:
+    for item2 in addressZip[1]:
         if item1==item2:
-           matches.append([addressZip1.index(item1),addressZip2.index(item2)]) 
+           matches.append([addressZip[0].index(item1),addressZip[1].index(item2)]) 
 
 
-writeAddresses(sheet1, addressZip1, sheet2, addressZip2, matches)
+writeAddresses(sheets, matches)
 
-
+for index, workbook in enumerate(workbooks):
+    workbook.save(workbookFilePath[index])
+    workbook.close
